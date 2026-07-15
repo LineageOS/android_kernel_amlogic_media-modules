@@ -65,7 +65,11 @@ endif
 include $(out_dir)/include/config/auto.conf
 
 modules:
-	$(MAKE) -C  $(KERNEL_SRC) M=$(M)/drivers modules "EXTRA_CFLAGS+=-I$(INCLUDE) -Wno-error $(CONFIGS_BUILD) $(EXTRA_INCLUDE) $(KBUILD_CFLAGS_MODULE) ${VERSION_CONTROL_CFLAGS} ${MEDIA_MODULES_CFLAGS}" $(CONFIGS)
+	$(MAKE) -C  $(KERNEL_SRC) M=$(M)/drivers modules "EXTRA_CFLAGS+=-I$(INCLUDE) -Wno-error $(CONFIGS_BUILD) $(EXTRA_INCLUDE) $(KBUILD_CFLAGS_MODULE) ${VERSION_CONTROL_CFLAGS} ${MEDIA_MODULES_CFLAGS}" \
+		KBUILD_EXTRA_SYMBOLS=$(abspath $(out_dir)/../common_drivers/Module.symvers) $(CONFIGS)
+	if [ -e $(out_dir)/$(M)/drivers/Module.symvers ]; then \
+		ln -sf $(out_dir)/$(M)/drivers/Module.symvers $(out_dir)/$(M)/Module.symvers; \
+	fi
 
 all: modules
 
