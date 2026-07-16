@@ -1,6 +1,5 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 MEDIA_MODULE_PATH := $(dir $(mkfile_path))
-VERSION_CONTROL_CFLAGS := $(shell ${MEDIA_MODULE_PATH}/version_control.sh)
 TARGET_VENDOR_MEDIA_VVC_SUPPORT := true
 
 PRODUCT_FULL_DIR ?= ${MAIN_FOLDER}/${PROJECT_CONFIG_DIR}
@@ -65,7 +64,7 @@ endif
 include $(out_dir)/include/config/auto.conf
 
 modules:
-	$(MAKE) -C  $(KERNEL_SRC) M=$(M)/drivers modules "EXTRA_CFLAGS+=-I$(INCLUDE) -Wno-error $(CONFIGS_BUILD) $(EXTRA_INCLUDE) $(KBUILD_CFLAGS_MODULE) ${VERSION_CONTROL_CFLAGS} ${MEDIA_MODULES_CFLAGS}" \
+	$(MAKE) -C  $(KERNEL_SRC) M=$(M)/drivers modules "EXTRA_CFLAGS+=-I$(INCLUDE) -Wno-error $(CONFIGS_BUILD) $(EXTRA_INCLUDE) $(KBUILD_CFLAGS_MODULE) ${MEDIA_MODULES_CFLAGS}" \
 		KBUILD_EXTRA_SYMBOLS=$(abspath $(out_dir)/../common_drivers/Module.symvers) $(CONFIGS)
 	if [ -e $(out_dir)/$(M)/drivers/Module.symvers ]; then \
 		ln -sf $(out_dir)/$(M)/drivers/Module.symvers $(out_dir)/$(M)/Module.symvers; \
