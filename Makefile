@@ -4,10 +4,8 @@ TARGET_VENDOR_MEDIA_VVC_SUPPORT := true
 
 PRODUCT_FULL_DIR ?= ${MAIN_FOLDER}/${PROJECT_CONFIG_DIR}
 ifeq (${wildcard ${PRODUCT_FULL_DIR}/media_modules.build.config.trunk.mk},)
-${info "media_modules use default config"}
 MEDIA_MODULES_CFLAGS = ""
 else
-${info "media_modules use config in ${PRODUCT_FULL_DIR}"}
 include ${PRODUCT_FULL_DIR}/media_modules.build.config.trunk.mk
 endif
 
