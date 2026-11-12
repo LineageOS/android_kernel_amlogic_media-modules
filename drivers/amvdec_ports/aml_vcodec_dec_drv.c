@@ -234,8 +234,10 @@ static int fops_vcodec_release(struct file *file)
 	aml_vcodec_dec_info_deinit(ctx);
 	aml_vcodec_dec_release(ctx);
 #ifdef CONFIG_AMLOGIC_MEDIA_PROXY
-	if (ctx->k_producer_session)
+	if (ctx->k_producer_session) {
 		media_proxy_produce_deinit(ctx->k_producer_session);
+		ctx->k_producer_session = NULL;
+	}
 #endif
 	v4l2_fh_del(&ctx->fh);
 	v4l2_fh_exit(&ctx->fh);
