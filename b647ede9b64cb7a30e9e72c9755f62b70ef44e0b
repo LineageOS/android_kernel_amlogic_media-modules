@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cef9f46c_120d02e4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2026-11-13T07:13:11Z",
+      "side": 1,
+      "message": "This makes broken TEE not make the entire system panic, it now just gracefully errors out in the app.",
+      "revId": "b647ede9b64cb7a30e9e72c9755f62b70ef44e0b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
