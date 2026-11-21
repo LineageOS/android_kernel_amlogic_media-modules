@@ -1093,6 +1093,7 @@ struct VP9Decoder_s {
 	void *count_buffer_addr;
 	dma_addr_t prob_buffer_phy_addr;
 	dma_addr_t count_buffer_phy_addr;
+	bool use_tee_prob_buf;
 
 	void *frame_mmu_map_addr;
 	dma_addr_t frame_mmu_map_phy_addr;
@@ -6667,13 +6668,14 @@ static void vp9_local_uninit(struct VP9Decoder_s *pbi)
 		pbi->prob_buffer_addr = NULL;
 		pbi->count_buffer_addr = NULL;
 	} else {
-		if ((get_cpu_major_id() >= AM_MESON_CPU_MAJOR_ID_G12A) &&
-			(vdec_secure(hw_to_vdec(pbi)))) {
-			tee_vp9_prob_free((u32)pbi->prob_buffer_phy_addr);
+		if (pbi->use_tee_prob_buf) {
+			if (pbi->prob_buffer_phy_addr)
+				tee_vp9_prob_free((u32)pbi->prob_buffer_phy_addr);
 			pbi->prob_buffer_phy_addr = 0;
 			pbi->count_buffer_phy_addr = 0;
 			pbi->prob_buffer_addr = NULL;
 			pbi->count_buffer_addr = NULL;
+			pbi->use_tee_prob_buf = false;
 		} else {
 			if (pbi->prob_buffer_addr) {
 				if (pbi->prob_buffer_phy_addr)
@@ -6682,6 +6684,7 @@ static void vp9_local_uninit(struct VP9Decoder_s *pbi)
 						pbi->prob_buffer_phy_addr);
 
 				pbi->prob_buffer_addr = NULL;
+				pbi->prob_buffer_phy_addr = 0;
 			}
 			if (pbi->count_buffer_addr) {
 				if (pbi->count_buffer_phy_addr)
@@ -6690,6 +6693,7 @@ static void vp9_local_uninit(struct VP9Decoder_s *pbi)
 						pbi->count_buffer_phy_addr);
 
 				pbi->count_buffer_addr = NULL;
+				pbi->count_buffer_phy_addr = 0;
 			}
 		}
 	}
@@ -6861,6 +6865,7 @@ static int vp9_local_init(struct VP9Decoder_s *pbi)
 	}
 	pbi->lmem_ptr = pbi->lmem_addr;
 
+	pbi->use_tee_prob_buf = false;
 	if (is_vp9_adapt_prob_hw_mode()) {
 		pbi->prob_buffer_phy_addr = cur_buf_info->prob_buf.buf_start;
 		pbi->count_buffer_phy_addr = cur_buf_info->prob_cnt_buf.buf_start;
@@ -6869,17 +6874,21 @@ static int vp9_local_init(struct VP9Decoder_s *pbi)
 	} else {
 		if ((get_cpu_major_id() >= AM_MESON_CPU_MAJOR_ID_G12A) &&
 			(vdec_secure(hw_to_vdec(pbi)))) {
-			u32 prob_addr, id;
+			u32 prob_addr = 0;
+			int id;
 			id = tee_vp9_prob_malloc(&prob_addr);
-			if (prob_addr <= 0)
-				pr_err("%s, tee[%d] malloc prob buf failed\n", __func__, id);
-			else {
+			if (id >= 0 && prob_addr > 0) {
 				pbi->prob_buffer_phy_addr = prob_addr;
 				pbi->count_buffer_phy_addr = pbi->prob_buffer_phy_addr + PROB_BUF_SIZE;
+				pbi->prob_buffer_addr = NULL;
+				pbi->count_buffer_addr = NULL;
+				pbi->use_tee_prob_buf = true;
+			} else {
+				pr_warn("%s, tee[%d] malloc prob buf failed, fallback to dma buf\n",
+					__func__, id);
 			}
-			pbi->prob_buffer_addr = NULL;
-			pbi->count_buffer_addr = NULL;
-		} else {
+		}
+		if (!pbi->use_tee_prob_buf) {
 			pbi->prob_buffer_addr = decoder_dma_alloc_coherent(&pbi->prob_buf_handle,
 						PROB_BUF_SIZE, &pbi->prob_buffer_phy_addr, "VP9_PROB_BUF");
 			if (pbi->prob_buffer_addr == NULL) {
@@ -9796,12 +9805,11 @@ static irqreturn_t vvp9_isr(int irq, void *data)
 		if (pbi->m_ins_flag)
 				reset_process_time(pbi);
 
-		if ((get_cpu_major_id() >= AM_MESON_CPU_MAJOR_ID_G12A) &&
-			(vdec_secure(hw_to_vdec(pbi)))) {
+		if (pbi->use_tee_prob_buf) {
 			pre_fc = ((cm->frame_type == KEY_FRAME) || (cm->intra_only)) ? 0 : 1;
 			tee_vp9_prob_process(pre_fc, cm->last_frame_type,
 				adapt_prob_status, (unsigned int)pbi->prob_buffer_phy_addr);
-		} else {
+		} else if (pbi->prob_buffer_addr && pbi->count_buffer_addr) {
 			uint8_t *prev_prob_b, *cur_prob_b, *count_b;
 
 			/*VP9_REQ_ADAPT_PROB*/
