@@ -51,6 +51,23 @@
       "parentUuid": "3cdb7486_f67d1602",
       "revId": "75abc85630baed50763e31e53ac604c160de0c64",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0544b240_189dea36",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2026-11-23T00:01:15Z",
+      "side": 1,
+      "message": "No regressions on jaws.",
+      "revId": "75abc85630baed50763e31e53ac604c160de0c64",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
